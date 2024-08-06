@@ -72,5 +72,43 @@ func (s *GraphService) DeleteGraph(id string) error {
 }
 
 func calculateSP(graph *model.Graph, start, end string) ([]string, error) {
+
+	adjList := make(map[string][]string)
+	for _, edge := range graph.Edges {
+		adjList[edge[0]] = append(adjList[edge[0]], edge[1])
+		adjList[edge[1]] = append(adjList[edge[1]], edge[0])
+	}
+
+	visited := map[string]bool{start: true}
+	prev := make(map[string]string)
+	path := []string{start}
+	for len(path) > 0 {
+		node := path[0]
+		path = path[1:]
+
+		for _, neighbor := range adjList[node] {
+			if !visited[neighbor] {
+				visited[neighbor] = true
+				prev[neighbor] = node
+				path = append(path, neighbor)
+
+				if neighbor == end {
+					return reconstructPathBFS(prev, start, end), nil
+				}
+			}
+		}
+	}
+
 	return nil, errors.New("no path found")
+}
+
+func reconstructPathBFS(prev map[string]string, start, end string) []string {
+	path := []string{}
+	for at := end; at != ""; at = prev[at] {
+		path = append([]string{at}, path...)
+	}
+	if len(path) == 0 || path[0] != start {
+		return nil
+	}
+	return path
 }
